@@ -94,6 +94,25 @@ end
 
 
 
+<script>
+<![CDATA[
+--------------------------------------------------
+-- GMCP
+--------------------------------------------------  
+
+GMCP = {}
+
+
+function GMCP.enable_invmon()
+    if (IsConnected()) then
+        Send_GMCP_Packet("config invmon yes")
+    end
+end
+]]>
+</script>
+
+
+
 <aliases>
     <alias
      match="^ *&cmdprefix; +update *$"
@@ -367,8 +386,14 @@ end
 -- Plugin Callbacks
 --------------------------------------------------
 
+function OnPluginConnect()
+    GMCP.enable_invmon()
+end
+
+
 function OnPluginInstall()
     Utility.initialize()
+    OnPluginConnect()
     Utility.msg("Plugin installed. Submit @Yaae help @wfor help.")
 end
 
