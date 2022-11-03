@@ -94,6 +94,106 @@ end
 
 
 
+<triggers>
+    <trigger
+     name="trigger_invmon_gag"
+     match="^\{inv(?:item|mon)\}.+$"
+     enabled="y"
+     omit_from_output="y"
+     keep_evaluating="y"
+     regexp="y"
+     sequence="0"
+    >
+    </trigger>
+    <trigger
+     match="^\{invitem\}(?<id>\d+),(?<flags>[A-Z]*),(?<name>.+?),(?<level>\d+),(?<type>\d+),(?<unique>0|1),(?<wearloc>-?\d+),(?<timer>-?\d+)\n\{invmon\}(?<action>\d+),\k<id>,(?<containerid>-?\d+),\k<wearloc>\nYou receive (?<item>.+) from (?<owner>.+)\.\Z"
+     enabled="y"
+     script="Invmon.item_received"
+     regexp="y"
+     multi_line="y"
+     lines_to_match="3"
+     sequence="100"
+    >
+    </trigger>
+</triggers>
+
+
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Invmon
+--------------------------------------------------
+
+Invmon = {}
+
+Invmon.ACTION = {
+    ["REMOVED"] = 1, ["WORN"] = 2,
+    ["LOST"] = 3, ["RECEIVED"] = 4,
+    ["CONTAINER_GET"] = 5, ["CONTAINER_PUT"] = 6,
+    ["CONSUMED"] = 7, 
+    ["VAULT_PUT"] = 9, ["VAULT_GET"] = 10,
+    ["KEYRING_PUT"] = 11, ["KEYRING_GET"] = 12,
+}
+
+Invmon.ITEM_FLAG = {
+    ["KEPT"] = "K", ["INVIS"] = "I",
+    ["MAGICAL"] = "M", ["GLOWING"] = "G",
+    ["HUMMING"] = "H", ["CURSED"] = "C",
+    ["ENVENOMED"] = "E", ["TEMPERED"] = "T",
+    ["WEAKENED"] = "W",
+}
+
+Invmon.ITEM_TYPE = {
+    ["LIGHT"] = 1, ["SCROLL"] = 2,
+    ["WAND"] = 3, ["STAFF"] = 4,
+    ["WEAPON"] = 5, ["TREASURE"] = 6,
+    ["ARMOR"] = 7, ["POTION"] = 8,
+    ["FURNITURE"] = 9, ["TRASH"] = 10,
+    ["CONTAINER"] = 11, ["DRINK"] = 12,
+    ["KEY"] = 13, ["FOOD"] = 14,
+    ["BOAT"] = 15, ["CORPSE_MOB"] = 16,
+    ["CORPSE_PLAYER"] = 17, ["FOUNTAIN"] = 18,
+    ["PILL"] = 19, ["PORTAL"] = 20,
+    ["BEACON"] = 21, ["GIFT_CARD"] = 22,
+    ["RAW_MATERIAL"] = 24, ["CAMP_FIRE"] = 25,
+    ["FORGE"] = 26, ["RUNESTONE"] = 27,
+}
+
+
+function Invmon.invitem(trigger, line, wc)
+end
+
+
+function Invmon.enable(on)
+    -- Enable/disable invmon tags via GMCP. Default behavior is to
+    -- enable. To disable them, `on` must be false.
+    if (IsConnected()) then
+        local setting = on == false and "no" or "yes"
+        Send_GMCP_Packet("config invmon " .. setting)
+    end
+end
+
+
+function Invmon.get_item_type_string(type)
+    -- Convert numeric item type to human-friendly string.
+    for name, id in pairs(Invmon.ITEM_TYPE) do
+        if (id == type) then
+            return name:lower():gsub("_", " ")
+        end
+    end
+    return "unknown"
+end
+
+
+function Invmon.item_has_flag(flagList, flag)
+    -- Determine whether the given flag appears in the flag list.
+    return flagList:upper():match(flag:upper()) and true or false
+end
+]]>
+</script>
+
+
+
 <script>
 <![CDATA[
 --------------------------------------------------
@@ -102,12 +202,6 @@ end
 
 GMCP = {}
 
-
-function GMCP.enable_invmon()
-    if (IsConnected()) then
-        Send_GMCP_Packet("config invmon yes")
-    end
-end
 ]]>
 </script>
 
@@ -387,7 +481,7 @@ end
 --------------------------------------------------
 
 function OnPluginConnect()
-    GMCP.enable_invmon()
+    Invmon.enable()
 end
 
 
