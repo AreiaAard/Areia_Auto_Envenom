@@ -94,6 +94,19 @@ end
 
 
 
+<script>
+<![CDATA[
+--------------------------------------------------
+-- Envenom
+--------------------------------------------------
+
+Envenom = {}
+
+]]>
+</script>
+
+
+
 <triggers>
     <trigger
      name="trigger_invmon_gag"
