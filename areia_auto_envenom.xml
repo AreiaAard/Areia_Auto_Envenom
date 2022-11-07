@@ -44,6 +44,58 @@ require "tprint"
 require "var"
 require "wait"
 dofile(GetInfo(60) .. "aardwolf_colors.lua")
+
+
+
+--------------------------------------------------
+-- Item Class
+-- Representing game objects
+--------------------------------------------------
+
+Item = {}
+Item.__index = Item
+
+
+function Item.__tostring(self)
+    local type = Invmon.get_item_type_string(self.type)
+    type = Utility.pascal(type)
+    return type .. "<" .. self.id .. "> " .. self.name
+end
+
+
+function Item:new(data)
+    local obj = {
+        id = tonumber(data.id) or error("Numeric Item id required.", 3),
+        name = data.name or error("Item name required.", 3),
+        type = tonumber(data.type) or error("Numeric Item type required.", 3),
+        level = tonumber(data.level) or error("Numeric Item level required.", 3),
+        owner = data.owner or error("String Item owner required.", 3)
+    }
+    if not (type(data.flags) == "string" and data.flags:match("^%a*$")) then
+        error("Alpha-string Item flags required.", 3)
+    end
+    obj.flags = data.flags:upper()
+    setmetatable(obj, Item)
+    return obj
+end
+
+
+function Item:get_type_string()
+    -- Convert numeric item type to human-friendly string.
+    for name, id in pairs(Invmon.ITEM_TYPE) do
+        if (self.type == id) then
+            local type = name:lower():gsub("_", " ")
+            return type
+        end
+    end
+    return "unknown"
+end
+
+
+function Item:has_flag(flag)
+    -- Determine whether this item has the given flag.
+    return self.flags:match(flag:upper()) and true or false
+end
 ]]>
 </script>
 
@@ -184,23 +236,6 @@ function Invmon.enable(on)
         local setting = on == false and "no" or "yes"
         Send_GMCP_Packet("config invmon " .. setting)
     end
-end
-
-
-function Invmon.get_item_type_string(type)
-    -- Convert numeric item type to human-friendly string.
-    for name, id in pairs(Invmon.ITEM_TYPE) do
-        if (id == type) then
-            return name:lower():gsub("_", " ")
-        end
-    end
-    return "unknown"
-end
-
-
-function Invmon.item_has_flag(flagList, flag)
-    -- Determine whether the given flag appears in the flag list.
-    return flagList:upper():match(flag:upper()) and true or false
 end
 ]]>
 </script>
