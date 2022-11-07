@@ -153,7 +153,17 @@ end
 --------------------------------------------------
 
 Envenom = {}
+Envenom.items = {}
 
+
+function Envenom.item_received(item)
+    -- Called whenever the receipt of a single item is detected by
+    -- the Invmon module.
+    if (getmetatable(item) ~= Item) then
+        error("Only Item objects are accepted.", 2)
+    end
+    table.insert(Envenom.items, item)
+end
 ]]>
 </script>
 
@@ -239,6 +249,7 @@ function Invmon.item_received(trigger, line, wc)
     -- Strip pretitle if any from owner name.
     wc.owner = wc.owner:match("(%a+)$")
     local item = Item:new(wc)
+    Envenom.item_received(item)
 end
 
 
