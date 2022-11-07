@@ -225,7 +225,20 @@ Invmon.ITEM_TYPE = {
 }
 
 
-function Invmon.invitem(trigger, line, wc)
+function Invmon.item_received(trigger, line, wc)
+    if (wc.item:match("^%d+ %*")) then
+        -- Multiple items received. Ignore.
+        return
+    end
+    if (wc.item ~= wc.name) then
+        -- Likely another case of multiple items being received, where
+        -- the final invmon tag refers to an item lower down in the
+        -- stack.
+        return
+    end
+    -- Strip pretitle if any from owner name.
+    wc.owner = wc.owner:match("(%a+)$")
+    local item = Item:new(wc)
 end
 
 
