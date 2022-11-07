@@ -146,6 +146,19 @@ end
 
 
 
+<aliases>
+    <alias
+     match="^ *&cmdprefix; +(?:display|items|list) *$"
+     enabled="y"
+     script="Envenom.display_items"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
+</aliases>
+
+
 <script>
 <![CDATA[
 --------------------------------------------------
@@ -163,6 +176,19 @@ function Envenom.item_received(item)
         error("Only Item objects are accepted.", 2)
     end
     table.insert(Envenom.items, item)
+end
+
+
+function Envenom.display_items(alias, line, wc)
+    local entry = "@w| @W%-10.10s @w| @W%-12.12s @w| @W%-25.25s @w|"
+    local seperator = "@w+------------+--------------+---------------------------+"
+    Utility.print(seperator)
+    Utility.print("@w|     @YID     @w|    @YOwner     @w|        @YDescription        @w|")
+    Utility.print(seperator)
+    for _, item in ipairs(Envenom.items) do
+        Utility.print(entry:format(item.id, item.owner, item.name))
+    end
+    Utility.print(seperator)
 end
 ]]>
 </script>
