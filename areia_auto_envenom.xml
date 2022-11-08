@@ -190,6 +190,20 @@ function Envenom.display_items(alias, line, wc)
     end
     Utility.print(seperator)
 end
+
+
+function Envenom.filter_items()
+    -- Produce a list of received items which are weapons lacking the
+    -- envenomed flag.
+    local weapons = {}
+    for i, item in ipairs(Envenom.items) do
+        if (item.type == Invmon.ITEM_TYPE.WEAPON
+        and not item:has_flag(Invmon.ITEM_FLAG.ENVENOMED)) then
+            table.insert(weapons, item)
+        end
+    end
+    return weapons
+end
 ]]>
 </script>
 
