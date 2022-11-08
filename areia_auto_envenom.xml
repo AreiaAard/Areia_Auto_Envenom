@@ -179,6 +179,16 @@ function Envenom.item_received(item)
 end
 
 
+function Envenom.item_given(id)
+    id = tonumber(id)
+    for i, item in ipairs(Envenom.items) do
+        if (item.id == id) then
+            table.remove(Envenom.items, i)
+        end
+    end
+end
+
+
 function Envenom.display_items(alias, line, wc)
     local entry = "@w| @W%-10.10s @w| @W%-12.12s @w| @W%-25.25s @w|"
     local seperator = "@w+------------+--------------+---------------------------+"
@@ -204,6 +214,13 @@ function Envenom.filter_items()
     end
     return weapons
 end
+
+
+function Envenom.return_items()
+    for i, item in ipairs(Envenom.items) do
+        SendNoEcho("give " .. item.id .. " " .. item.owner)
+    end
+end
 ]]>
 </script>
 
@@ -227,6 +244,16 @@ end
      regexp="y"
      multi_line="y"
      lines_to_match="3"
+     sequence="100"
+    >
+    </trigger>
+    <trigger
+     match="^\{invmon\}(?<action>\d+),(?<id>\d+),(?<containerid>-?\d+),(?<wearloc>-?\d+)\nYou give (?<item>.+) to (?<owner>.+)\.$"
+     enabled="y"
+     script="Invmon.item_given"
+     regexp="y"
+     multi_line="y"
+     lines_to_match="2"
      sequence="100"
     >
     </trigger>
@@ -290,6 +317,11 @@ function Invmon.item_received(trigger, line, wc)
     wc.owner = wc.owner:match("(%a+)$")
     local item = Item:new(wc)
     Envenom.item_received(item)
+end
+
+
+function Invmon.item_given(trigger, line, wc)
+    Envenom.item_given(wc.id)
 end
 
 
