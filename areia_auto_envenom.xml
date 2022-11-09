@@ -346,6 +346,33 @@ end
 
 GMCP = {}
 
+GMCP.STATE = {
+    ["LOGIN"] = 1, ["MOTD"] = 2,
+    ["ACTIVE"] = 3, ["AFK"] = 4,
+    ["NOTE"] = 5, ["EDIT"] = 6,
+    ["PAGER"] = 7, ["FIGHTING"] = 8,
+    ["SLEEPING"] = 9, ["SITTING"] = 11,
+    ["RUNNING"] = 12,
+}
+
+
+function GMCP.get_state()
+    return tonumber(gmcp("char.status.state")) or -1
+end
+
+
+function GMCP.get_location()
+    local uid = gmcp("room.info.num") or "-1"
+    local room = gmcp("room.info.name") or "Somewhere"
+    local zone = Utility.pascal(gmcp("room.info.zone")) or "Somewhere"
+    local msg = "@G%s @w/ %s @w(#@Y%d@w)"
+    return msg:format(zone, room, uid)
+end
+
+
+function GMCP.get_subclass()
+    return gmcp("char.base.subclass") or ""
+end
 ]]>
 </script>
 
