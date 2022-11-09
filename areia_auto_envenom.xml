@@ -180,6 +180,8 @@ end
 
 
 function Envenom.item_given(id)
+    -- Called whenever the giving of a single item is detected by the
+    -- Invmon module.
     id = tonumber(id)
     for i, item in ipairs(Envenom.items) do
         if (item.id == id) then
@@ -238,8 +240,9 @@ end
     >
     </trigger>
     <trigger
+     group="group_invmon"
      match="^\{invitem\}(?<id>\d+),(?<flags>[A-Z]*),(?<name>.+?),(?<level>\d+),(?<type>\d+),(?<unique>0|1),(?<wearloc>-?\d+),(?<timer>-?\d+)\n\{invmon\}(?<action>\d+),\k<id>,(?<containerid>-?\d+),\k<wearloc>\nYou receive (?<item>.+) from (?<owner>.+)\.\Z"
-     enabled="y"
+     enabled="n"
      script="Invmon.item_received"
      regexp="y"
      multi_line="y"
@@ -248,8 +251,9 @@ end
     >
     </trigger>
     <trigger
+     group="group_invmon"
      match="^\{invmon\}(?<action>\d+),(?<id>\d+),(?<containerid>-?\d+),(?<wearloc>-?\d+)\nYou give (?<item>.+) to (?<owner>.+)\.$"
-     enabled="y"
+     enabled="n"
      script="Invmon.item_given"
      regexp="y"
      multi_line="y"
@@ -321,6 +325,10 @@ end
 
 
 function Invmon.item_given(trigger, line, wc)
+    if (wc.item:match("^%d+ %*")) then
+        -- Multiple items given. Ignore.
+        return
+    end
     Envenom.item_given(wc.id)
 end
 
@@ -332,6 +340,14 @@ function Invmon.enable(on)
         local setting = on == false and "no" or "yes"
         Send_GMCP_Packet("config invmon " .. setting)
     end
+end
+
+
+function Invmon.monitor(on)
+    -- Set monitoring of receipt and giveing of single items by the
+    -- Invmon module. When `on` is false, no invmon data will be
+    -- processed.
+    EnableTriggerGroup("group_invmon", on)
 end
 ]]>
 </script>
