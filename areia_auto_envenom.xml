@@ -96,6 +96,14 @@ function Item:has_flag(flag)
     -- Determine whether this item has the given flag.
     return self.flags:match(flag:upper()) and true or false
 end
+
+
+function Item:is_envenomable()
+    -- Determine whether the Item is a weapon lacking the envenomed
+    -- flag.
+    return self.type == Invmon.ITEM_TYPE.WEAPON
+        and not self:has_flag(Invmon.ITEM_FLAG.ENVENOMED)
+end
 ]]>
 </script>
 
@@ -148,6 +156,24 @@ end
 
 <aliases>
     <alias
+     match="^ *&cmdprefix; +(?<setting>on|off|enable|disable) *$"
+     enabled="y"
+     script="Envenom.activate"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
+    <alias
+     match="^ *&cmdprefix; +env(?:enom)? *$"
+     enabled="y"
+     script="Envenom.envenom"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
+    <alias
      match="^ *&cmdprefix; +(?:display|items|list) *$"
      enabled="y"
      script="Envenom.display_items"
@@ -166,7 +192,39 @@ end
 --------------------------------------------------
 
 Envenom = {}
+
+-- Whether module is enabled or disabled.
+Envenom.active = false
+-- List of items received while module is active.
 Envenom.items = {}
+
+-- Regex to determine the outcome of envenom attempts.
+Envenom.REGEX = "^(?:You (?<coat>coat) .+ with deadly poison"
+    .. "|You (?<fail>fail) to envenom .+"
+    .. "|You are (?<unable>unable) to envenom .+"
+    .. "|.+ is (?<already>already) coated with poison)\\.$"
+-- Number of failed envenom attempts to tolerate before cancellation.
+Envenom.MAX_ATTEMPTS = 3
+-- Number of seconds to wait for the regex before cancellation.
+Envenom.TIMEOUT = 10
+
+
+function Envenom.activate(alias, line, wc)
+    if (not Envenom.check_subclass()) then
+        return
+    end
+    local setting = wc.setting:lower()
+    if (setting == "on" or setting == "enable") then
+        Envenom.active = true
+        local msg = "@WEnvenoms are now available at %s.$C"
+        Utility.msg(msg:format(GMCP.get_location()))
+    else
+        Envenom.active = false
+        Envenom.items = {}
+        Utility.msg("@WEnvenoms are now completed.$C")
+    end
+    Invmon.monitor(Envenom.active)
+end
 
 
 function Envenom.item_received(item)
@@ -187,6 +245,69 @@ function Envenom.item_given(id)
         if (item.id == id) then
             table.remove(Envenom.items, i)
         end
+    end
+end
+
+
+function Envenom.envenom(alias, line, wc)
+    if (not Envenom.check_subclass()) then
+        return
+    end
+    if (not Envenom.active) then
+        Utility.msg("Bot is not currently active. Submit @Yaae on @wto enable it.")
+        return
+    end
+    if (#Envenom.items == 0) then
+        Utility.msg("No single items have yet been received.")
+        return
+    end
+    wait.make(Envenom.envenom_cr)
+end
+
+
+function Envenom.envenom_cr()
+    local successes = 0
+    for i, weapon in ipairs(Envenom.items) do
+        if (weapon:is_envenomable()) then
+            local attempts = 0
+            repeat
+                if (GMCP.get_state() ~= GMCP.STATE.ACTIVE) then
+                    Utility.msg("Must be in active state to envenom.")
+                    return
+                end
+                if (attempts > Envenom.MAX_ATTEMPTS) then
+                    Utility.msg("Too many failures. Envenom cancelled.")
+                    return
+                end
+
+                attempts = attempts + 1
+                SendNoEcho("envenom " .. weapon.id)
+                local line, wc = wait.regexp(Envenom.REGEX, Envenom.TIMEOUT)
+
+                if (not line) then
+                    Utility.msg("Timed out. Envenom cancelled.")
+                    return
+                end
+
+                -- Repeat this *only* when the result is outright failure.
+                local success = wc.fail ~= "fail"
+            until (success)
+
+            successes = successes + 1
+        end
+    end
+
+    if (successes == 0) then
+        Utility.msg("No envenom-able weapons have yet been received.")
+    end
+    Envenom.return_items()
+end
+
+
+function Envenom.return_items()
+    local cmd = "give %d %s"
+    for i, item in ipairs(Envenom.items) do
+        SendNoEcho(cmd:format(item.id, item.owner))
     end
 end
 
@@ -218,10 +339,16 @@ function Envenom.filter_items()
 end
 
 
-function Envenom.return_items()
-    for i, item in ipairs(Envenom.items) do
-        SendNoEcho("give " .. item.id .. " " .. item.owner)
+function Envenom.check_subclass()
+    -- Determine whether the current char is a Venomist. Print an
+    -- error message if not. Returns true/false.
+    local subclass = GMCP.get_subclass()
+    if (subclass ~= "Venomist") then
+        local msg = "%ss are unable to perform mass envenoms."
+        Utility.msg(msg:format(subclass))
+        return false
     end
+    return true
 end
 ]]>
 </script>
