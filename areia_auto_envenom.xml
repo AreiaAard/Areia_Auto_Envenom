@@ -26,9 +26,6 @@
 
 
 
-<aliases>
-</aliases>
-
 <script>
 <![CDATA[
 --------------------------------------------------
@@ -109,6 +106,37 @@ end
 
 
 
+<aliases>
+    <alias
+     match="^ *&cmdprefix; +config +chan(?:nel)?(?<setting> +.*)?$"
+     enabled="y"
+     script="Config.set_channel"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
+    <alias
+     match="^ *&cmdprefix; +config +helmid(?<setting> +.*)?$"
+     enabled="y"
+     script="Config.set_helmid"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
+    <alias
+     match="^ *&cmdprefix; +config +bagid(?<setting> +.*)?$"
+     enabled="y"
+     script="Config.set_bagid"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
+</aliases>
+
+
 <script>
 <![CDATA[
 --------------------------------------------------
@@ -125,6 +153,8 @@ end
 
 function Config.default()
     local data = {
+        channel = "gtell",
+        helmid = "'aardwolf helm true sight'",
     }
     return json.encode(data)
 end
@@ -148,6 +178,43 @@ end
 function Config.set(key, val)
     Config.data[key] = val
     Config.save()
+end
+
+
+function Config.set_channel(alias, line, wc)
+    local setting = trim(wc.setting):lower()
+    if (setting ~= "") then
+        Config.set("channel", setting)
+    end
+    local msg = "Announcement channel set to %s."
+    msg = msg:format(Config.get("channel"))
+    Utility.msg(msg)
+end
+
+
+function Config.set_helmid(alias, line, wc)
+    local setting = trim(wc.setting):lower()
+    if (setting ~= "") then
+        Config.set("helmid", setting)
+    end
+    local msg = "Helm of True Sight ID set to %s."
+    msg = msg:format(Config.get("helmid"))
+    Utility.msg(msg)
+end
+
+
+function Config.set_bagid(alias, line, wc)
+    local setting = trim(wc.setting):lower()
+    if (setting ~= "") then
+        Config.set("bagid", setting)
+    end
+    local id = Config.get("bagid")
+    if (not id) then
+        Utility.msg("Bag ID not yet set.")
+        return
+    end
+    local msg = "Bag ID set to %s."
+    Utility.msg(msg:format(id))
 end
 ]]>
 </script>
@@ -213,15 +280,20 @@ function Envenom.activate(alias, line, wc)
     if (not Envenom.check_subclass()) then
         return
     end
+    local channel = Config.get("channel")
     local setting = wc.setting:lower()
     if (setting == "on" or setting == "enable") then
         Envenom.active = true
-        local msg = "@WEnvenoms are now available at %s.$C"
-        Utility.msg(msg:format(GMCP.get_location()))
+        local location = GMCP.get_location()
+        local msg = "%s @WEnvenoms are now available at %s.$C"
+        Execute(msg:format(channel, location))
+        msg = "%s @WPlease only give weapons individually. 'Give all.weapon' will be ignored.$C"
+        Execute(msg:format(channel))
     else
         Envenom.active = false
         Envenom.items = {}
-        Utility.msg("@WEnvenoms are now completed.$C")
+        local msg = "%s @WEnvenoms are no longer available.$C"
+        Execute(msg:format(channel))
     end
     Invmon.monitor(Envenom.active)
 end
