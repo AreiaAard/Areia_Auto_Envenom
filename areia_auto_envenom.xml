@@ -10,7 +10,7 @@
     id="6f7b078734f87ed9f640cb21"
     language="Lua"
     purpose="Envenom bot"
-    save_state="n"
+    save_state="y"
     date_written="2022-10-31 17:30:04"
     requires="5.06"
     version="0.00"
