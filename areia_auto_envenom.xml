@@ -117,7 +117,7 @@ end
     >
     </alias>
     <alias
-     match="^ *&cmdprefix; +config +helmid(?<setting> +.*)?$"
+     match="^ *&cmdprefix; +config +helm(?<setting> +.*)?$"
      enabled="y"
      script="Config.set_helmid"
      regexp="y"
@@ -126,7 +126,7 @@ end
     >
     </alias>
     <alias
-     match="^ *&cmdprefix; +config +bagid(?<setting> +.*)?$"
+     match="^ *&cmdprefix; +config +bag(?<setting> +.*)?$"
      enabled="y"
      script="Config.set_bagid"
      regexp="y"
@@ -283,6 +283,9 @@ function Envenom.activate(alias, line, wc)
     local channel = Config.get("channel")
     local setting = wc.setting:lower()
     if (setting == "on" or setting == "enable") then
+        if (not Envenom.wear_helm()) then
+            return
+        end
         Envenom.active = true
         local location = GMCP.get_location()
         local msg = "%s @WEnvenoms are now available at %s.$C"
@@ -292,10 +295,53 @@ function Envenom.activate(alias, line, wc)
     else
         Envenom.active = false
         Envenom.items = {}
+        Envenom.remove_helm()
         local msg = "%s @WEnvenoms are no longer available.$C"
         Execute(msg:format(channel))
     end
     Invmon.monitor(Envenom.active)
+end
+
+
+function Envenom.wear_helm()
+    -- Attempt to wear the user's Aard helm. Return true if helm and
+    -- bag IDs are set; false otherwise.
+    local helm = Config.get("helmid")
+    local bag = Config.get("bagid")
+    if (not helm) then
+        Utility.msg("No ID is set for your Helm of True Sight.")
+        Utility.msg("Submit @Yaae config helm <id> @wto set it.")
+        return false
+    elseif (not bag) then
+        Utility.msg("No location known for storage of your Helm of True Sight.")
+        Utility.msg("Submit @Yaae config bag <id> @wto set it.")
+        return false
+    end
+    local stackChar = GetAlphaOption("command_stack_character")
+    local cmd = "get %s %s%swear %s"
+    Execute(cmd:format(helm, bag, stackChar, helm))
+    return true
+end
+
+
+function Envenom.remove_helm()
+    -- Attempt to remove the user's Aard helm. Return true if helm and
+    -- bag IDs are set; false otherwise.
+    local helm = Config.get("helmid")
+    local bag = Config.get("bagid")
+    if (not helm) then
+        Utility.msg("No ID is set for your Helm of True Sight.")
+        Utility.msg("Submit @Yaae config helm <id> @wto set it.")
+        return false
+    elseif (not bag) then
+        Utility.msg("No location known for storage of your Helm of True Sight.")
+        Utility.msg("Submit @Yaae config bag <id> @wto set it.")
+        return false
+    end
+    local stackChar = GetAlphaOption("command_stack_character")
+    local cmd = "remove %s%sput %s %s%swear all"
+    Execute(cmd:format(helm, stackChar, helm, bag, stackChar))
+    return true
 end
 
 
