@@ -287,6 +287,7 @@ function Envenom.activate(alias, line, wc)
             return
         end
         Envenom.active = true
+        Envenom.gold = 0 -- Track gold tips
         local location = GMCP.get_location()
         local msg = "%s @WEnvenoms are now available at %s.$C"
         Execute(msg:format(channel, location))
@@ -298,6 +299,7 @@ function Envenom.activate(alias, line, wc)
         Envenom.remove_helm()
         local msg = "%s @WEnvenoms are no longer available.$C"
         Execute(msg:format(channel))
+        Envenom.display_gold()
     end
     Invmon.monitor(Envenom.active)
 end
@@ -367,6 +369,14 @@ function Envenom.item_given(id)
 end
 
 
+function Envenom.gold_received(amount)
+    -- Called by Invmon module whenever gold is received during an
+    -- envenom operation.
+    amount = tonumber(amount) or 0
+    Envenom.gold = Envenom.gold + amount
+end
+
+
 function Envenom.envenom(alias, line, wc)
     if (not Envenom.check_subclass()) then
         return
@@ -427,6 +437,18 @@ function Envenom.return_items()
     for i, item in ipairs(Envenom.items) do
         SendNoEcho(cmd:format(item.id, item.owner))
     end
+end
+
+
+function Envenom.display_gold()
+    -- Notify the user of the amount of gold received during an
+    -- envenom session.
+    if (Envenom.gold == 0) then
+        return
+    end
+    local amount = commas(Envenom.gold)
+    local msg = "Received a total of %s gold this session."
+    Utility.msg(msg:format(amount))
 end
 
 
@@ -506,6 +528,15 @@ end
      sequence="100"
     >
     </trigger>
+    <trigger
+     group="group_invmon"
+      match="^You receive (?<amount>[0-9,]+) gold from .+\.$"
+     enabled="n"
+     script="Invmon.gold_received"
+     regexp="y"
+     sequence="100"
+    >
+    </trigger>
 </triggers>
 
 
@@ -575,6 +606,12 @@ function Invmon.item_given(trigger, line, wc)
         return
     end
     Envenom.item_given(wc.id)
+end
+
+
+function Invmon.gold_received(trigger, line, wc)
+    local amount = wc.amount:gsub(",", "")
+    Envenom.gold_received(amount)
 end
 
 
