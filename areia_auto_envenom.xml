@@ -770,6 +770,10 @@ function Help.initialize()
             desc = "Plugin configuration options",
             func = Help.config,
         }, {
+            name = "envenom",
+            desc = "Performing envenom sessions",
+            func = Help.envenom,
+        }, {
             name = "misc",
             desc = "Other plugin commands",
             func = Help.misc,
@@ -827,8 +831,47 @@ end
 
 function Help.config()
     local body = [===[
+    The following options modify the plugin's behavior and are saved across
+Mush sessions. Invoking them requires that you type 'aae config', followed by
+the option, followed by any arguments (e.g., 'aae config channel gtell').
+Arguments displayed in square brackets are optional; omitting these will dis-
+play the option's current value.
+
+@Ychan [<channel>]@w: Set the channel on which the envenom bot will announce the
+    start and end of envenom sessions. Default is gtell, but you might want to
+    set this to barter, for example, to do public envenoms.
+@Yhelm [<id>]@w: Set the id/keywords of your Aard Helm of True Sight. The script
+    will use this to wear and remove the helm automatically at the start and
+    end of each envenom session. Default is 'aardwolf helm true sight'.
+@Ybag [<id>]@w: Set the id/keywords of the container in which you store your Aard
+    helm. The script uses this to retrieve and re-store the helm at the start
+    and end of each envenom session. No default value.
 ]===]
     Help.display_helpfile("Config", body)
+end
+
+
+function Help.envenom()
+    local body = [===[
+    The following commands operate the envenom bot itself. Note that no item
+or gold tracking will occur while the bot is disabled, and that disabling the
+bot will erase any information stored for the current session.
+
+aae on|off: Enable or disable the envenom bot, starting or ending a session.
+    Note that no item or gold tracking will occur while the bot is disabled,
+    and disabling the bot will erase any data stored for the current session.
+aae list: Display a list of items which the bot has recognized as being re-
+    ceived during the current session. Only the items that appear on this list
+    are eligible for envenoming. Note that any items given in stacks together
+    (e.g., via 'give all.item' syntax) will not be recognized.
+aae env: Perform an envenom operation. This will analyze all single items re-
+    ceived, searching for non-envenomed weapons and envenoming them. When all
+    weapons have been envenomed, all items that would appear on the items list
+    (see above) are returned to their owners. You can also use this command to
+    retry the returning of all items in case any failed to be returned (e.g.,
+    due to the owner having nogive toggled, etc.) until the list is empty.
+]===]
+    Help.display_helpfile("Envenom", body)
 end
 
 
