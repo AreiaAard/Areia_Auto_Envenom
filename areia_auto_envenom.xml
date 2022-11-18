@@ -232,6 +232,19 @@ end
     >
     </alias>
     <alias
+     match="^ *&cmdprefix; +announce(?<channel> +.*)?$"
+     enabled="y"
+     send_to="12"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    <send>
+        local channel = trim("%&lt;channel&gt;")
+        Envenom.announce_state(channel)
+    </send>
+    </alias>
+    <alias
      match="^ *&cmdprefix; +env(?:enom)? *$"
      enabled="y"
      script="Envenom.envenom"
@@ -291,7 +304,6 @@ function Envenom.activate(alias, line, wc)
     if (not Envenom.check_subclass()) then
         return
     end
-    local channel = Config.get("channel")
     local setting = wc.setting:lower()
     if (setting == "on" or setting == "enable") then
         if (not Envenom.wear_helm()) then
@@ -299,20 +311,14 @@ function Envenom.activate(alias, line, wc)
         end
         Envenom.active = true
         Envenom.gold = 0 -- Track gold tips
-        local location = GMCP.get_location()
-        local msg = "%s @WEnvenoms are now available at %s.$C"
-        Execute(msg:format(channel, location))
-        msg = "%s @WPlease only give weapons individually. 'Give all.weapon' will be ignored.$C"
-        Execute(msg:format(channel))
     else
         Envenom.active = false
         Envenom.items = {}
         Envenom.remove_helm()
-        local msg = "%s @WEnvenoms are no longer available.$C"
-        Execute(msg:format(channel))
         Envenom.display_gold()
     end
     Invmon.monitor(Envenom.active)
+    Envenom.announce_state()
 end
 
 
@@ -355,6 +361,27 @@ function Envenom.remove_helm()
     local cmd = "remove %s%sput %s %s%swear all"
     Execute(cmd:format(helm, stackChar, helm, bag, stackChar))
     return true
+end
+
+
+function Envenom.announce_state(channel)
+    -- Produce notification messages depending on whether the bot is
+    -- enabled or disabled. Messages are sent to the channel defined
+    -- by Config.get("channel") if none is given.
+    if (not channel or channel:match("^%s*$")) then
+        channel = Config.get("channel")
+    end
+    local msg
+    if (not Envenom.active) then
+        msg = "%s @WEnvenoms are no longer available.$C"
+        Execute(msg:format(channel))
+        return
+    end
+    local location = GMCP.get_location()
+    msg = "%s @WEnvenoms are now available at %s.$C"
+    Execute(msg:format(channel, location))
+    msg = "%s @WPlease only give weapons individually. 'Give all.weapon' will be ignored.$C"
+    Execute(msg:format(channel))
 end
 
 
@@ -909,6 +936,9 @@ bot will erase any information stored for the current session.
     due to the owner having nogive toggled, etc.) until the list is empty.
 @Yaae cancel@w: Prematurely abort an ongoing envenom operation and return all items
     to their owners.
+@Yaae announce [<channel>]@w: Manually announce the bot's state. By default, this
+    appears on the channel specified by @Yaae config chan@w. You can modify this on
+    the fly by supplying another channel name (e.g., @Yaae announce ft@w).
 ]===]
     Help.display_helpfile("Envenom", body)
 end
