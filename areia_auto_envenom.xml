@@ -13,7 +13,7 @@
     save_state="y"
     date_written="2022-10-31 17:30:04"
     requires="5.06"
-    version="0.10"
+    version="0.11"
    >
 <description trim="y">
 <![CDATA[
@@ -273,7 +273,7 @@ Envenom.REGEX = "^(?:You (?<coat>coat) .+ with deadly poison"
 -- Number of failed envenom attempts to tolerate before cancellation.
 Envenom.MAX_ATTEMPTS = 3
 -- Number of seconds to wait for the regex before cancellation.
-Envenom.TIMEOUT = 10
+Envenom.TIMEOUT = 60
 
 
 function Envenom.activate(alias, line, wc)
