@@ -241,6 +241,15 @@ end
     >
     </alias>
     <alias
+     match="^ *&cmdprefix; +cancel *$"
+     enabled="y"
+     script="Envenom.cancel"
+     regexp="y"
+     ignore_case="y"
+     sequence="100"
+    >
+    </alias>
+    <alias
      match="^ *&cmdprefix; +(?:display|items|list) *$"
      enabled="y"
      script="Envenom.display_items"
@@ -403,6 +412,11 @@ function Envenom.envenom_cr()
     Envenom.isEnvenoming = true
     local successes = 0
     for i, weapon in ipairs(Envenom.items) do
+        if (not Envenom.isEnvenoming) then
+            -- Envenom operation has been cancelled.
+            break
+        end
+
         if (weapon:is_envenomable()) then
             local attempts = 0
             repeat
@@ -437,6 +451,21 @@ function Envenom.envenom_cr()
     end
     Envenom.return_items()
     Envenom.isEnvenoming = false
+end
+
+
+function Envenom.cancel(alias, line, wc)
+    if (not Envenom.active) then
+        Utility.msg("Bot is not currently active. Submit @Yaae on @wto enable it.")
+        return
+    end
+    if (not Envenom.isEnvenoming) then
+        Utility.msg("No envenom operation is in progress. Submit @Yaae env @wto begin.")
+        return
+    end
+    -- Setting this to false will terminate the main envenom loop.
+    Envenom.isEnvenoming = false
+    Utility.msg("Envenom operation cancelled.")
 end
 
 
@@ -865,19 +894,21 @@ function Help.envenom()
 or gold tracking will occur while the bot is disabled, and that disabling the
 bot will erase any information stored for the current session.
 
-aae on|off: Enable or disable the envenom bot, starting or ending a session.
+@Yaae on|off@w: Enable or disable the envenom bot, starting or ending a session.
     Note that no item or gold tracking will occur while the bot is disabled,
     and disabling the bot will erase any data stored for the current session.
-aae list: Display a list of items which the bot has recognized as being re-
+@Yaae list@w: Display a list of items which the bot has recognized as being re-
     ceived during the current session. Only the items that appear on this list
     are eligible for envenoming. Note that any items given in stacks together
     (e.g., via 'give all.item' syntax) will not be recognized.
-aae env: Perform an envenom operation. This will analyze all single items re-
+@Yaae env@w: Perform an envenom operation. This will analyze all single items re-
     ceived, searching for non-envenomed weapons and envenoming them. When all
     weapons have been envenomed, all items that would appear on the items list
     (see above) are returned to their owners. You can also use this command to
     retry the returning of all items in case any failed to be returned (e.g.,
     due to the owner having nogive toggled, etc.) until the list is empty.
+@Yaae cancel@w: Prematurely abort an ongoing envenom operation and return all items
+    to their owners.
 ]===]
     Help.display_helpfile("Envenom", body)
 end
