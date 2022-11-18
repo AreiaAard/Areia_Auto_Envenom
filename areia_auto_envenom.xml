@@ -262,6 +262,8 @@ Envenom = {}
 
 -- Whether module is enabled or disabled.
 Envenom.active = false
+-- Whether an envenom operation is currently in progress.
+Envenom.isEnvenoming = false
 -- List of items received while module is active.
 Envenom.items = {}
 
@@ -378,6 +380,10 @@ end
 
 
 function Envenom.envenom(alias, line, wc)
+    if (Envenom.isEnvenoming) then
+        Utility.msg("Another envenom operation is already in progress. Please wait.")
+        return
+    end
     if (not Envenom.check_subclass()) then
         return
     end
@@ -394,6 +400,7 @@ end
 
 
 function Envenom.envenom_cr()
+    Envenom.isEnvenoming = true
     local successes = 0
     for i, weapon in ipairs(Envenom.items) do
         if (weapon:is_envenomable()) then
@@ -429,6 +436,7 @@ function Envenom.envenom_cr()
         Utility.msg("No envenom-able weapons have yet been received.")
     end
     Envenom.return_items()
+    Envenom.isEnvenoming = false
 end
 
 
