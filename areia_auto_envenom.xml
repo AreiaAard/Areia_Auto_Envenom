@@ -288,6 +288,8 @@ Envenom.active = false
 Envenom.isEnvenoming = false
 -- List of items received while module is active.
 Envenom.items = {}
+-- Track amount of gold received in a session.
+Envenom.gold = 0
 
 -- Regex to determine the outcome of envenom attempts.
 Envenom.REGEX = "^(?:You (?<coat>coat) .+ with deadly poison"
@@ -310,12 +312,12 @@ function Envenom.activate(alias, line, wc)
             return
         end
         Envenom.active = true
-        Envenom.gold = 0 -- Track gold tips
     else
         Envenom.active = false
         Envenom.items = {}
         Envenom.remove_helm()
         Envenom.display_gold()
+        Envenom.gold = 0
     end
     Invmon.monitor(Envenom.active)
     Envenom.announce_state()
