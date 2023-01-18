@@ -13,7 +13,7 @@
     save_state="y"
     date_written="2022-10-31 17:30:04"
     requires="5.06"
-    version="0.12"
+    version="0.13"
    >
 <description trim="y">
 <![CDATA[
@@ -295,7 +295,7 @@ Envenom.gold = 0
 Envenom.REGEX = "^(?:You (?<coat>coat) .+ with deadly poison"
     .. "|You (?<fail>fail) to envenom .+"
     .. "|You are (?<unable>unable) to envenom .+"
-    .. "|.+ is (?<already>already) coated with poison)\\.$"
+    .. "|.+ is (?<already>already) (?:envenomed|coated with poison))\\.$"
 -- Number of failed envenom attempts to tolerate before cancellation.
 Envenom.MAX_ATTEMPTS = 3
 -- Number of seconds to wait for the regex before cancellation.
@@ -314,6 +314,7 @@ function Envenom.activate(alias, line, wc)
         Envenom.active = true
     else
         Envenom.active = false
+        Envenom.isEnvenoming = false
         Envenom.items = {}
         Envenom.remove_helm()
         Envenom.display_gold()
